@@ -1,0 +1,87 @@
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class User {
+    private int id;
+    private String firstName;
+    private String lastName;
+    private int age;
+    private String country;
+}
+
+public class UserManager {
+
+    // 1) Вывести всех пользователей, отсортированных по lastName
+    public static List<User> sortByLastName(List<User> users) {
+        return users.stream()
+                .sorted(Comparator.comparing(User::getLastName))
+                .collect(Collectors.toList());
+    }
+
+    // 2) Вывести всех пользователей, отсортированных по age
+    public static List<User> sortByAge(List<User> users) {
+        return users.stream()
+                .sorted(Comparator.comparingInt(User::getAge))
+                .collect(Collectors.toList());
+    }
+
+    // 3) Проверить, что для всех пользователей age > 7
+    public static boolean allUsersAboveAge(List<User> users, int age) {
+        return users.stream()
+                .allMatch(user -> user.getAge() > age);
+    }
+
+    // 4) Вычислить средний возраст всех пользователей
+    public static double averageAge(List<User> users) {
+        return users.stream()
+                .mapToInt(User::getAge)
+                .average()
+                .orElse(0);
+    }
+
+    // 5) Вывести количество разных стран проживания
+    public static long countDistinctCountries(List<User> users) {
+        return users.stream()
+                .map(User::getCountry)
+                .distinct()
+                .count();
+    }
+
+    public static void main(String[] args) {
+        List<User> users = new ArrayList<>();
+        users.add(new User(1, "Alice", "Smith", 25, "USA"));
+        users.add(new User(2, "Bob", "Johnson", 30, "Canada"));
+        users.add(new User(3, "Charlie", "Brown", 22, "USA"));
+        users.add(new User(4, "David", "Wilson", 15, "UK"));
+        users.add(new User(5, "Eve", "Davis", 10, "Canada"));
+
+        // Вывод всех пользователей, отсортированных по lastName
+        System.out.println("Sorted by last name:");
+        sortByLastName(users).forEach(System.out::println);
+
+        // Вывод всех пользователей, отсортированных по age
+        System.out.println("\nSorted by age:");
+        sortByAge(users).forEach(System.out::println);
+
+        // Проверка, что все пользователи старше 7 лет
+        boolean allAboveSeven = allUsersAboveAge(users, 7);
+        System.out.println("\nAll users above age 7: " + allAboveSeven);
+
+        // Вычисление среднего возраста пользователей
+        double average = averageAge(users);
+        System.out.println("Average age: " + average);
+
+        // Количество разных стран проживания
+        long distinctCountries = countDistinctCountries(users);
+        System.out.println("Distinct countries count: " + distinctCountries);
+    }
+}
