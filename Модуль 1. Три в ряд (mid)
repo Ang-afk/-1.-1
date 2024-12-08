@@ -1,0 +1,169 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Random;
+
+public class MatchThreeGame extends JFrame {
+    private final int GRID_SIZE = 8; // Размер поля 8x8
+    private final int CELL_SIZE = 60; // Размер одной клетки
+    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN}; // Цвета шариков
+    private Color[][] grid; // Игровое поле
+    private int score; // Счет
+
+    public MatchThreeGame() {
+        grid = new Color[GRID_SIZE][GRID_SIZE];
+        score = 0;
+        initializeGrid();
+        setupUI();
+        checkForMatches();
+    }
+
+    private void initializeGrid() {
+        Random rand = new Random();
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                grid[i][j] = colors[rand.nextInt(colors.length)];
+            }
+        }
+    }
+
+    private void setupUI() {
+        setTitle("Match Three Game");
+        setSize(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE + 50);
+        setResizable(false);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                drawGrid(g);
+            }
+        };
+
+        panel.setPreferredSize(new Dimension(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE));
+        panel.addMouseListener(new MouseAdapter() {
+            private Point firstClick = null;
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                int x = e.getX() / CELL_SIZE;
+                int y = e.getY() / CELL_SIZE;
+
+                if (firstClick == null) {
+                    firstClick = new Point(x, y);
+                } else {
+                    swapElements(firstClick.x, firstClick.y, x, y);
+                    firstClick = null;
+                }
+                repaint();
+            }
+        });
+
+        add(panel);
+        setVisible(true);
+    }
+
+    private void drawGrid(Graphics g) {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                g.setColor(grid[i][j]);
+                g.fillRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                g.setColor(Color.BLACK);
+                g.drawRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            }
+        }
+        g.setColor(Color.BLACK);
+        g.drawString("Score: " + score, 10, GRID_SIZE * CELL_SIZE + 20);
+    }
+
+    private void swapElements(int x1, int y1, int x2, int y2) {
+        if (Math.abs(x1 - x2) + Math.abs(y1 - y2) == 1) { // Проверка на соседние элементы
+            Color temp = grid[x1][y1];
+            grid[x1][y1] = grid[x2][y2];
+            grid[x2][y2] = temp;
+
+            if (!checkForMatches()) { // Если нет совпадений, вернуть обратно
+                temp = grid[x1][y1];
+                grid[x1][y1] = grid[x2][y2];
+                grid[x2][y2] = temp;
+            }
+        }
+    }
+
+    private boolean checkForMatches() {
+        boolean hasMatches = false;
+
+        // Проверка по горизонтали
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE - 2; j++) {
+                if (grid[i][j] != null && grid[i][j] == grid[i][j + 1] && grid[i][j] == grid[i][j + 2]) {
+                    hasMatches = true;
+                    int count = 3;
+                    while (j + count < GRID_SIZE && grid[i][j] == grid[i][j + count]) {
+                        count++;
+                    }
+                    removeMatches(i, j, count, true); // Удаление совпадений
+                    j += count - 1; // Пропустить проверенные ячейки
+                }
+            }
+        }
+
+        // Проверка по вертикали
+        for (int j = 0; j < GRID_SIZE; j++) {
+            for (int i = 0; i < GRID_SIZE - 2; i++) {
+                if (grid[i][j] != null && grid[i][j] == grid[i + 1][j] && grid[i][j] == grid[i + 2][j]) {
+                    hasMatches = true;
+                    int count = 3;
+                    while (i + count < GRID_SIZE && grid[i][j] == grid[i + count][j]) {
+                        count++;
+                    }
+                    removeMatches(i, j, count, false); // Удаление совпадений
+                    i += count - 1; // Пропустить проверенные ячейки
+                }
+            }
+        }
+
+        return hasMatches;
+    }
+
+    private void removeMatches(int x, int y, int count, boolean horizontal) {
+        if (horizontal) {
+            for (int k = 0; k < count; k++) {
+                grid[x][y + k] = null; // Удаление элемента
+            }
+        } else {
+            for (int k = 0; k < count; k++) {
+                grid[x + k][y] = null; // Удаление элемента
+            }
+        }
+        score += count; // Увеличение счета
+        refillGrid(); // Заполнение пустых мест
+    }
+
+    private void refillGrid() {
+        Random rand = new Random();
+        for (int j = GRID_SIZE - 1; j >= 0; j--) {
+            for (int i = 0; i < GRID_SIZE; i++) {
+                if (grid[i][j] == null) { // Если ячейка пустая
+                    for (int k = j - 1; k >= 0; k--) { // Сдвигаем элементы вниз
+                        if (grid[i][k] != null) {
+                            grid[i][j] = grid[i][k];
+                            grid[i][k] = null;
+                            break;
+                        }
+                    }
+                    if (grid[i][j] == null) { // Если все еще пусто, заполняем новым элементом
+                        grid[i][j] = colors[rand.nextInt(colors.length)];
+                    }
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MatchThreeGame::new);
+    }
+}
