@@ -1,0 +1,126 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+public class ChessGame extends JFrame {
+    private final int BOARD_SIZE = 8;
+    private final int CELL_SIZE = 80;
+    private final Color LIGHT_COLOR = Color.LIGHT_GRAY;
+    private final Color DARK_COLOR = Color.DARK_GRAY;
+    private final String[][] board = new String[BOARD_SIZE][BOARD_SIZE];
+    private String currentPlayer = "White";
+    private Point selectedPiece = null;
+
+    public ChessGame() {
+        setTitle("Chess Game");
+        setSize(BOARD_SIZE * CELL_SIZE + 100, BOARD_SIZE * CELL_SIZE + 100);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        initializeBoard();
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int x = e.getX() / CELL_SIZE;
+                int y = e.getY() / CELL_SIZE;
+
+                if (selectedPiece == null) {
+                    if (board[y][x] != null && board[y][x].startsWith(currentPlayer.substring(0, 1))) {
+                        selectedPiece = new Point(x, y);
+                    }
+                } else {
+                    movePiece(selectedPiece.x, selectedPiece.y, x, y);
+                    selectedPiece = null; // Сброс выбора
+                }
+                repaint();
+            }
+        });
+    }
+
+    private void initializeBoard() {
+        // Инициализация шахматной доски
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                board[i][j] = null;
+            }
+        }
+        // Установка фигур
+        board[0][0] = "Black R"; board[0][1] = "Black N"; board[0][2] = "Black B"; board[0][3] = "Black Q";
+        board[0][4] = "Black K"; board[0][5] = "Black B"; board[0][6] = "Black N"; board[0][7] = "Black R";
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            board[1][i] = "Black P";
+            board[6][i] = "White P";
+        }
+        board[7][0] = "White R"; board[7][1] = "White N"; board[7][2] = "White B"; board[7][3] = "White Q";
+        board[7][4] = "White K"; board[7][5] = "White B"; board[7][6] = "White N"; board[7][7] = "White R";
+    }
+
+    private void movePiece(int fromX, int fromY, int toX, int toY) {
+        // Логика движения фигур (основная проверка)
+        if (isValidMove(fromX, fromY, toX, toY)) {
+            // Перемещение фигуры
+            board[toY][toX] = board[fromY][fromX];
+            board[fromY][fromX] = null;
+            currentPlayer = currentPlayer.equals("White") ? "Black" : "White"; // Смена игрока
+        }
+    }
+
+    private boolean isValidMove(int fromX, int fromY, int toX, int toY) {
+        // Простая проверка на допустимость хода (можно расширить)
+        if (toX < 0 || toX >= BOARD_SIZE || toY < 0 || toY >= BOARD_SIZE) return false;
+        if (board[toY][toX] != null && board[toY][toX].startsWith(currentPlayer.substring(0, 1))) return false; // Нельзя бить свои фигуры
+        return true; // Здесь можно добавить более сложные проверки для каждой фигуры
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        drawBoard(g);
+        drawPieces(g);
+        drawSelectedPiece(g);
+        drawCurrentPlayer(g);
+    }
+
+    private void drawBoard(Graphics g) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if ((i + j) % 2 == 0) {
+                    g.setColor(LIGHT_COLOR);
+                } else {
+                    g.setColor(DARK_COLOR);
+                }
+                g.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            }
+        }
+    }
+
+    private void drawPieces(Graphics g) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (board[i][j] != null) {
+                    g.setColor(board[i][j].startsWith("White") ? Color.WHITE : Color.BLACK);
+                    g.drawString(board[i][j], j * CELL_SIZE + 20, i * CELL_SIZE + 50);
+                }
+            }
+        }
+    }
+
+    private void drawSelectedPiece(Graphics g) {
+        if (selectedPiece != null) {
+            g.setColor(Color.RED);
+            g.drawRect(selectedPiece.x * CELL_SIZE, selectedPiece.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        }
+    }
+
+    private void drawCurrentPlayer(Graphics g) {
+        g.setColor(Color.BLACK);
+        g.drawString("Current Player: " + currentPlayer, 10, BOARD_SIZE * CELL_SIZE + 30);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            ChessGame game = new ChessGame();
+            game.setVisible(true);
+        });
+    }
+}
